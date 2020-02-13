@@ -86,7 +86,7 @@ class KeyDownEvent(GameEvent):
             pass
         elif self.key == pygame.K_SPACE:#Space bar pressed
             pass#bring up menu
-        return
+        return True
     
 class CoinClickEvent(GameEvent):
     def __init__(self, board, graphics, event):
@@ -110,4 +110,51 @@ class CoinClickEvent(GameEvent):
                             currentPlayer.setStack(-1)
                             #redraw coin
                         self.graphics.animateCoin(coin)
-                        return
+                        return True
+##############################
+##Game Runner
+##############################
+class Runner():
+    def __init__(self, board, graphics, players):
+        self.board = board
+        self.graphics = graphics
+        self.players = players
+    def quit(self):
+        pygame.quit()
+        sys.exit()    
+    def checkEvent(self, event, currentPlayer):
+        if event.type == pygame.QUIT:#check for exit#
+            self.quit()
+        elif event.type ==pygame.KEYDOWN:#Check for key Presses#
+            return KeyDownEvent(self.board, self.graphics, event).handle(currentPlayer)
+        elif event.type == pygame.MOUSEBUTTONUP and event.button ==1:#Check for mouse left mouse click
+            return CoinClickEvent(self.board, self.graphics, event).handle(currentPlayer)
+        return False
+         
+    def checkWin(self):
+        coins = 0
+        for stack in self.board.getStacks():
+            coins+= sum(coin.inStack() for coin in stack.getCoins())#count coins that are still on the board
+        return coins == 0 or coins == 1#if there are no coins on the board, the game is over
+    
+    def run(self):
+        turn = -1
+        currentPlayer = None
+        while (not self.checkWin()):#main game loop
+            #start the current player's turn#
+            #########################
+            if currentPlayer == None or not currentPlayer.onTurn():
+                turn+=1
+                currentPlayer = self.players[turn%len(self.players)]
+                self.graphics.showPlayer(currentPlayer.name)
+                currentPlayer.startTurn()
+                self.graphics.displayBoard()#display the board
+            #########################
+            
+            #check for events#
+            e = pygame.event.get()
+            for event in e:
+                self.checkEvent(event, currentPlayer)
+                
+            pygame.display.flip()
+        return currentPlayer#possibly wrong

@@ -2,7 +2,7 @@
 nim.py
 created on: 01/15/2020
 created by: Anna Branam
-last modified: 02/12/2020
+last modified: 02/13/2020
 
 
 Nim is a game that consists of stacks of coins
@@ -35,64 +35,14 @@ class Game():
                 stacks.append(random.randrange(1, 6))
         self.board = Board(stacks)
         
-    def checkWin(self):
-        coins = 0
-        for stack in self.board.getStacks():
-            coins+= sum(coin.inStack() for coin in stack.getCoins())#count coins that are still on the board
-        return coins == 0 or coins == 1#if there are no coins on the board, the game is over
-    
-    def quit(self):
-        pygame.quit()
-        sys.exit()
-            
     def play(self):
         ###INITS###
-        ##################################
         self.genBoard()
         self.graphics = Graphics(self.board)
-        turn = 0
-        currentPlayer = self.players[0]
-        ##################################
 
         self.graphics.displayBoard()#display the board
-
-        ###MAIN GAME LOOP###
-        #####################################################
-        while (not self.checkWin()):
-            #start the current player's turn#
-            #########################
-            if not currentPlayer.onTurn():
-                self.graphics.showPlayer(currentPlayer.name)
-                currentPlayer.startTurn()
-                self.graphics.displayBoard()#display the board
-            #########################
-            
-            #check for events#
-            ##########################################
-            e = pygame.event.get()
-            for event in e:
-                #check for exit#
-                if event.type == pygame.QUIT:
-                    self.quit()
-
-                #Check for key Presses#
-                elif event.type ==pygame.KEYDOWN:
-                    KeyDownEvent(self.board, self.graphics, event).handle(currentPlayer)
-                    break
-                
-                #Check for mouse clicks#
-                elif event.type == pygame.MOUSEBUTTONUP and event.button ==1:#Left mouse button pressed
-                    CoinClickEvent(self.board, self.graphics, event).handle(currentPlayer)
-                    break
-            ##########################################
-                
-            #check for next turn
-            if not currentPlayer.onTurn():
-                turn+=1
-                currentPlayer = self.players[turn%len(self.players)]
-            pygame.display.flip()
-        ###end of main game loop###
-        #####################################################
+        currentPlayer = Runner(self.board, self.graphics, self.players).run()#main game loop
+        
         #display win
         self.graphics.displayWin(currentPlayer.name)
         return
