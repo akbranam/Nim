@@ -16,35 +16,36 @@ the last player to remove a coin loses
 ############################################################################
 import sys
 import random
-import nim_exceptions as exceptions
-from nim_mechanics import *
-from nim_graphics import *
-from nim_board import *
+import nim_mechanics
+import nim_graphics
+import nim_board
 ############################################################################
 #classes
 ############################################################################
 
 class Game():
     def __init__(self):
-        self.players = [Player("Player 1"), Player("Player 2")]
+        self.players = [nim_mechanics.Player("Player 1"), nim_mechanics.Player("Player 2")]
         self.board, self.graphics = None, None
 
     def genBoard(self, stacks=[]):
         if stacks == []:#If no coins are specified, randomize
             for i in range(random.randrange(2, 6)):
                 stacks.append(random.randrange(1, 6))
-        self.board = Board(stacks)
-        
+        self.board = nim_board.Board(stacks)
+    def menu(self):
+        pass
     def play(self):
         ###INITS###
         self.genBoard()
-        self.graphics = Graphics(self.board)
+        self.graphics = nim_graphics.Graphics(self.board)
 
         self.graphics.displayBoard()#display the board
-        currentPlayer = Runner(self.board, self.graphics, self.players).run()#main game loop
+        turn = nim_mechanics.Runner(self.board, self.graphics, self.players).run()#main game loop
         
         #display win
-        self.graphics.displayWin(currentPlayer.name)
+        self.graphics.displayWin(self.players[turn%len(self.players)].getName())
+        
         return
 
 ############################################################################

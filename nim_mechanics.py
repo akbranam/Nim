@@ -2,7 +2,7 @@
 nim_mechanics.py
 created on:01/16/2020
 created by: Anna Branam
-last modified: 02/12/2020
+last modified: 02/13/2020
 
 TODO:
 AI player
@@ -46,10 +46,11 @@ class Player():
         self.coins = []
     def startTurn(self): self.isTurn = True
     def onTurn(self): return self.isTurn
+    def move(self): return (self.stack, self.coins)
     def getStack(self): return self.stack
     def setStack(self, stack):self.stack = stack
-    def move(self): return (self.stack, self.coins)
-
+    def getName(self):return self.name
+    
 class AI(Player):
     def __init(self, name, board):
         super(AI, self).__init__(name)
@@ -91,25 +92,23 @@ class KeyDownEvent(GameEvent):
 class CoinClickEvent(GameEvent):
     def __init__(self, board, graphics, event):
         super(CoinClickEvent, self).__init__( board, graphics)
-        (self.x, self.y) = event.pos
+        (self.x, self.y) = event.pos#the position of the mouse click
     def handle(self, currentPlayer):
         for stack in self.board.getStacks():#go through the stacks
             for coin in stack.getCoins():#go through the coins in each stack
-                mid_x, mid_y = self.graphics.getCoinPos(coin)
-                x_start, y_start = mid_x-COIN_SIZE, mid_y-COIN_SIZE
-                x_end, y_end = mid_x+COIN_SIZE, mid_y+COIN_SIZE
+                mid_x, mid_y = self.graphics.getCoinPos(coin)#find the midpoint of the coin shape
+                x_start, y_start = mid_x-COIN_SIZE, mid_y-COIN_SIZE#find the starting point of the coin shape
+                x_end, y_end = mid_x+COIN_SIZE, mid_y+COIN_SIZE#find the end point of the coin shape
                 if x_end>=self.x and x_start<=self.x and y_end>=self.y and y_start<=self.y and coin.inStack():#Check if click is on coin
-                    if currentPlayer.getStack()<0:
-                        currentPlayer.setStack(coin.getY())
+                    if currentPlayer.getStack()<0:#check if a stack has been selected
+                        currentPlayer.setStack(coin.getY())#set the selected stack to this stack
                     if currentPlayer.getStack()==coin.getY():#check if coin is in selected stack
                         coin.select()#select or disselect a coin
-                        if coin.isSelected():currentPlayer.addCoin(coin.getX())
-                        else: currentPlayer.removeCoin(coin.getX())
-                        #check if there are no coins currently selected
-                        if not(any(filter(lambda coin: coin.isSelected(), self.board.getStacks()[currentPlayer.getStack()].getCoins()))):
-                            currentPlayer.setStack(-1)
-                            #redraw coin
-                        self.graphics.animateCoin(coin)
+                        if coin.isSelected():currentPlayer.addCoin(coin.getX())#add coin to player's selected coin list if the coin is selected
+                        else: currentPlayer.removeCoin(coin.getX())#remove the coin from the players seleceted coin list
+                        if not(any(filter(lambda coin: coin.isSelected(), self.board.getStacks()[currentPlayer.getStack()].getCoins()))):#check if there are no coins currently selected
+                            currentPlayer.setStack(-1)#if there are no selected coins unselect the stack
+                        self.graphics.animateCoin(coin)#redraw coin
                         return True
 ##############################
 ##Game Runner
@@ -135,12 +134,15 @@ class Runner():
         coins = 0
         for stack in self.board.getStacks():
             coins+= sum(coin.inStack() for coin in stack.getCoins())#count coins that are still on the board
-        return coins == 0 or coins == 1#if there are no coins on the board, the game is over
+        return coins#if there are no coins on the board, the game is over
     
     def run(self):
         turn = -1
         currentPlayer = None
-        while (not self.checkWin()):#main game loop
+        while True:#main game loop
+            
+            if self.checkWin()==1: return turn
+            elif self.checkWin()==0: return turn+1
             #start the current player's turn#
             #########################
             if currentPlayer == None or not currentPlayer.onTurn():
@@ -155,6 +157,5 @@ class Runner():
             e = pygame.event.get()
             for event in e:
                 self.checkEvent(event, currentPlayer)
-                
             pygame.display.flip()
-        return currentPlayer#possibly wrong
+        
