@@ -2,9 +2,7 @@
 nim_mechanics.py
 created on:01/16/2020
 created by: Anna Branam
-last modified: 02/07/2020
-
-
+last modified: 02/12/2020
 
 TODO:
 AI player
@@ -16,11 +14,18 @@ AI player
 #imports
 ############################################################################
 import random
+import pygame
+from nim_globals import *
 
 
 ############################################################################
 #classes
 ############################################################################
+
+##############################
+##Players
+##############################
+
 class Player():
     def __init__(self, name):
         self.name = name
@@ -47,54 +52,62 @@ class Player():
 
 class AI(Player):
     def __init(self, name, board):
-        super.__init__(name)
+        super(AI, self).__init__(name)
     def move(self):
         #insert algorithm here
         pass
 
-class Coin():
-    def __init__(self, x=0, y=0):
-        self.x = x#x coordiant on board
-        self.y = y#y coordiant on board
-        self.removed, self.selected = False, False
-    def remove(self):
-        self.removed = True
-        self.selected = False
-        return self.removed
-    def inStack(self): return not self.removed
-    def isSelected(self):return self.selected
-    def select(self):
-        if self.inStack():#only selectable if the coin is in the stack
-            self.selected = not self.selected
-    def getX(self):return self.x
-    def getY(self):return self.y
-        
-class Stack():
-    def __init__(self,stackID, coins):
-        self.stackID = stackID#y coord of stack
-        self.coins = []
-        for i in range(coins):
-            self.coins.append(Coin(i, stackID))
-            self.coinCount = coins
-    def getCoins(self):return self.coins
-    def removeCoins(self, coins):
-        if any(filter(lambda coinID: coinID>=len(self.coins) or self.coins[coinID].removed, coins)): return False#if any of the moves is illegal, return False
-        #at this point, all selected coins are still in the stack
-        for coinID in coins:
-            self.coins[coinID].remove()#flag each coin as removed
-        return True
+##############################
+##Game Events
+##############################
+#parent class for all game events
+class GameEvent():
+    def __init__(self, board, graphics, event = None):
+        self.board = board
+        self.graphics = graphics
+        pass
+
+class KeyDownEvent(GameEvent):
+    def __init__(self, board, graphics, event):
+        super(KeyDownEvent, self).__init__(board, graphics)
+        self.key = event.key
+    def handle(self, currentPlayer):
+        if self.key == pygame.K_RETURN:#return/enter key presed
+            (stack, coins) = currentPlayer.move()
+            if self.board.getMove((stack, coins)):
+                for coin in coins:
+                    self.graphics.removeCoin(self.board.getStacks()[currentPlayer.getStack()].getCoins()[coin])
+                currentPlayer.endTurn()#end current player's turn
+            else:#invalid move
+                self.graphics.displayInvalidMove()
+                print("invalid move")
+        elif self.key == pygame.K_ESCAPE:#escape key pressed
+            #self.quit()
+            pass
+        elif self.key == pygame.K_SPACE:#Space bar pressed
+            pass#bring up menu
+        return
     
-class Board():
-    def __init__(self, stacks):
-        stacks.sort()
-        self.stacks = []
-        for i in range(len(stacks)):
-            self.stacks.append(Stack(i, stacks[i]))
-    def getStacks(self):return self.stacks
-    def removeCoins(self, stack, coins):
-        #check length of stack and attempt to remove coin from stack
-        return self.stacks[stack].removeCoins(coins)
-    def getMove(self, move):
-        (stack, coins) = move
-        #check move validity and remove coin
-        return stack in range(len(self.stacks)) and self.removeCoins(stack, coins)
+class CoinClickEvent(GameEvent):
+    def __init__(self, board, graphics, event):
+        super(CoinClickEvent, self).__init__( board, graphics)
+        (self.x, self.y) = event.pos
+    def handle(self, currentPlayer):
+        for stack in self.board.getStacks():#go through the stacks
+            for coin in stack.getCoins():#go through the coins in each stack
+                mid_x, mid_y = self.graphics.getCoinPos(coin)
+                x_start, y_start = mid_x-COIN_SIZE, mid_y-COIN_SIZE
+                x_end, y_end = mid_x+COIN_SIZE, mid_y+COIN_SIZE
+                if x_end>=self.x and x_start<=self.x and y_end>=self.y and y_start<=self.y and coin.inStack():#Check if click is on coin
+                    if currentPlayer.getStack()<0:
+                        currentPlayer.setStack(coin.getY())
+                    if currentPlayer.getStack()==coin.getY():#check if coin is in selected stack
+                        coin.select()#select or disselect a coin
+                        if coin.isSelected():currentPlayer.addCoin(coin.getX())
+                        else: currentPlayer.removeCoin(coin.getX())
+                        #check if there are no coins currently selected
+                        if not(any(filter(lambda coin: coin.isSelected(), self.board.getStacks()[currentPlayer.getStack()].getCoins()))):
+                            currentPlayer.setStack(-1)
+                            #redraw coin
+                        self.graphics.animateCoin(coin)
+                        return

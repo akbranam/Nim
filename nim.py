@@ -2,7 +2,7 @@
 nim.py
 created on: 01/15/2020
 created by: Anna Branam
-last modified: 02/07/2020
+last modified: 02/12/2020
 
 
 Nim is a game that consists of stacks of coins
@@ -19,6 +19,7 @@ import random
 import nim_exceptions as exceptions
 from nim_mechanics import *
 from nim_graphics import *
+from nim_board import *
 ############################################################################
 #classes
 ############################################################################
@@ -71,57 +72,20 @@ class Game():
             e = pygame.event.get()
             for event in e:
                 #check for exit#
-                ########################
                 if event.type == pygame.QUIT:
                     self.quit()
-                ########################
+
                 #Check for key Presses#
-                ########################
                 elif event.type ==pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:#return/enter key presed
-                        (stack, coins) = currentPlayer.move()
-                        if self.board.getMove((stack, coins)):
-                            for coin in coins:
-                                self.graphics.removeCoin(self.board.getStacks()[currentPlayer.getStack()].getCoins()[coin])
-                            currentPlayer.endTurn()#end current player's turn
-                        else: print("invalid move")
-                        break
-                    elif event.key == pygame.K_ESCAPE:#escape key pressed
-                        self.quit()
-                    elif event.key == pygame.K_SPACE:#Space bar pressed
-                        #bring up menu
-                        break
-                ########################
+                    KeyDownEvent(self.board, self.graphics, event).handle(currentPlayer)
+                    break
                 
                 #Check for mouse clicks#
-                ########################
                 elif event.type == pygame.MOUSEBUTTONUP and event.button ==1:#Left mouse button pressed
-                    (x, y) = event.pos
-                    try:#set up break out excetption
-                        for stack in self.board.getStacks():#go through the stacks
-                            for coin in stack.getCoins():#go through the coins in each stack
-                                mid_x, mid_y = self.graphics.getCoinPos(coin)
-                                x_start, y_start = mid_x-COIN_SIZE, mid_y-COIN_SIZE
-                                x_end, y_end = mid_x+COIN_SIZE, mid_y+COIN_SIZE
-                                if x_end>=x and x_start<=x and y_end>=y and y_start<=y and coin.inStack():#Check if click is on coin
-                                    if currentPlayer.getStack()<0:
-                                        currentPlayer.setStack(coin.getY())
-                                    if currentPlayer.getStack()==coin.getY():#check if coin is in selected stack
-                                        coin.select()#select or disselect a coin
-                                        if coin.isSelected():currentPlayer.addCoin(coin.getX())
-                                        else: currentPlayer.removeCoin(coin.getX())
-                                        #check if there are no coins currently selected
-                                        if not(any(filter(lambda coin: coin.isSelected(), self.board.getStacks()[currentPlayer.getStack()].getCoins()))):
-                                            currentPlayer.setStack(-1)
-                                        #redraw coin
-                                        self.graphics.animateCoin(coin)
-                                        #pygame.display.flip()
-                                        raise exceptions.breakOutException#break out of the loops
-                    except exceptions.breakOutException:pass#catches exception outside of the loops
+                    CoinClickEvent(self.board, self.graphics, event).handle(currentPlayer)
                     break
-            ########################
-            #end checking for events#
             ##########################################
+                
             #check for next turn
             if not currentPlayer.onTurn():
                 turn+=1

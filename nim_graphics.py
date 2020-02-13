@@ -2,7 +2,7 @@
 graphics.py
 cerated on: 01/16/2020
 created by: Anna Branam
-last modified: 02/07/2020
+last modified: 02/12/2020
 """
 
 ############################################################################
@@ -35,6 +35,8 @@ class Graphics ():
         #display specified player
         pass
     def displayMove(self, move):
+        pass
+    def displayInvalidMove(self):
         pass
     def displayWin(self, player):
         #show winning player
