@@ -24,7 +24,10 @@ class Graphics ():
         pygame.init()
         pygame.display.set_caption(SCREEN_NAME) 
         self.screen = pygame.display.set_mode((self.width, self.height))
-        self.font = pygame.font.Font(FONT, FONT_SIZE) 
+        self.font = pygame.font.Font(FONT, FONT_SIZE)
+    def displayMenu(self):
+        pass
+    
     def displayBoard(self):
         for stack in self.board.getStacks():
             for coin in stack.getCoins():#draw each coin in stack

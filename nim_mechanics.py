@@ -2,7 +2,7 @@
 nim_mechanics.py
 created on:01/16/2020
 created by: Anna Branam
-last modified: 02/13/2020
+last modified: 02/20/2020
 
 TODO:
 AI player
@@ -33,6 +33,7 @@ class Player():
         self.isTurn = False
         self.coins = []
         pass
+    def isAI(self):return False
     def addCoin(self, coin):
         if coin not in self.coins:
             self.coins.append(coin)
@@ -51,12 +52,24 @@ class Player():
     def setStack(self, stack):self.stack = stack
     def getName(self):return self.name
     
-class AI(Player):
-    def __init(self, name, board):
+class AI(Player):#random moves
+    def __init__(self, name, board, diff = 0):
         super(AI, self).__init__(name)
+        self.board = board
+        self.diff = diff
+    def isAI(self):return True
     def move(self):
-        #insert algorithm here
-        pass
+        self.coins = []
+        self.stack = random.randrange(len(self.board.getStacks()))
+        coin_list = self.board.getStacks()[self.stack].getCoins()
+        coins = [coin for coin in coin_list if coin.inStack]
+        random.shuffle(coins)
+        if len(coins)>1: coin_range = random.randrange(len(coins))
+        else: coin_range = 1
+        for i in range(coin_range):
+            self.addCoin(coins[i].getX())
+        print((self.stack, self.coins))
+        return (self.stack, self.coins)
 
 ##############################
 ##Game Events
@@ -75,7 +88,7 @@ class KeyDownEvent(GameEvent):
     def handle(self, currentPlayer):
         if self.key == pygame.K_RETURN:#return/enter key presed
             (stack, coins) = currentPlayer.move()
-            if self.board.getMove((stack, coins)):
+            if self.board.getMove((stack, coins)):#move was valid
                 for coin in coins:
                     self.graphics.removeCoin(self.board.getStacks()[currentPlayer.getStack()].getCoins()[coin])
                 currentPlayer.endTurn()#end current player's turn
@@ -110,6 +123,10 @@ class CoinClickEvent(GameEvent):
                             currentPlayer.setStack(-1)#if there are no selected coins unselect the stack
                         self.graphics.animateCoin(coin)#redraw coin
                         return True
+class menuClickEvent(GameEvent):
+    def __init__(self):
+        pass
+    
 ##############################
 ##Game Runner
 ##############################
@@ -144,7 +161,7 @@ class Runner():
             if self.checkWin()==1: return turn
             elif self.checkWin()==0: return turn+1
             #start the current player's turn#
-            #########################
+            ######################### 
             if currentPlayer == None or not currentPlayer.onTurn():
                 turn+=1
                 currentPlayer = self.players[turn%len(self.players)]
@@ -152,10 +169,12 @@ class Runner():
                 currentPlayer.startTurn()
                 self.graphics.displayBoard()#display the board
             #########################
-            
+
+            if currentPlayer.isAI():
+                pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))
             #check for events#
             e = pygame.event.get()
             for event in e:
-                self.checkEvent(event, currentPlayer)
+                if self.checkEvent(event, currentPlayer):break
             pygame.display.flip()
-        
+            

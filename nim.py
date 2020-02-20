@@ -2,7 +2,7 @@
 nim.py
 created on: 01/15/2020
 created by: Anna Branam
-last modified: 02/13/2020
+last modified: 02/20/2020
 
 
 Nim is a game that consists of stacks of coins
@@ -25,27 +25,28 @@ import nim_board
 
 class Game():
     def __init__(self):
-        self.players = [nim_mechanics.Player("Player 1"), nim_mechanics.Player("Player 2")]
         self.board, self.graphics = None, None
+        #self.players = [nim_mechanics.Player("Player 1"), nim_mechanics.AI("Player 2", self.board)]
+        
 
     def genBoard(self, stacks=[]):
         if stacks == []:#If no coins are specified, randomize
             for i in range(random.randrange(2, 6)):
                 stacks.append(random.randrange(1, 6))
         self.board = nim_board.Board(stacks)
-    def menu(self):
-        pass
+        
     def play(self):
         ###INITS###
         self.genBoard()
         self.graphics = nim_graphics.Graphics(self.board)
+        self.players = [nim_mechanics.Player("Player 1"), nim_mechanics.AI("Player 2", self.board)]
 
         self.graphics.displayBoard()#display the board
         turn = nim_mechanics.Runner(self.board, self.graphics, self.players).run()#main game loop
         
         #display win
         self.graphics.displayWin(self.players[turn%len(self.players)].getName())
-        
+       
         return
 
 ############################################################################
@@ -53,6 +54,6 @@ class Game():
 ############################################################################
 
 if __name__=="__main__":
-    g = Game()
-    g.play()
+    Game().play()
+     
     
